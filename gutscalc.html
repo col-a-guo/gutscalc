@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uma Musume Guts Calculator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        import React, { useState, useEffect } from 'react';
+
+        function GutsCalculator() {
+        // Presets
+        const presets = {
+            'Scorpio Cup': {
+            conditions: {
+                distance: '2000Medium',
+                runningStyle: 'End',
+                distanceApt: 'A',
+                surfaceApt: 'A',
+                surface: 'Turf',
+                trackCondition: 'Soft',
+                weather: 'Rain',
+                mood: 'Normal',
+                spotStruggleChance: 95,
+                duelingChance: 30
+            }
+            },
+            'Sagittarius Cup': {
+            conditions: {
+                distance: '2500Long',
+                runningStyle: 'End',
+                distanceApt: 'A',
+                surfaceApt: 'A',
+                surface: 'Turf',
+                trackCondition: 'Firm',
+                weather: 'Sunny',
+                mood: 'Normal',
+                spotStruggleChance: 95,
+                duelingChance: 30
+            }
+            }
+        };
+
+        const [selectedPreset, setSelectedPreset] = useState('Scorpio Cup');
+        const [stats, setStats] = useState({ speed: 1200, stamina: 800, power: 900, guts: 400, wit: 600 });
+        const [raceConditions, setRaceConditions] = useState(presets['Scorpio Cup'].conditions);
+        const [results, setResults] = useState(null);
+
+        // Distance options
+        const distances = [
+            { value: '1000Sprint', label: '1000m Sprint', distance: 1000 },
+            { value: '1200Sprint', label: '1200m Sprint', distance: 1200 },
+            { value: '1400Sprint', label: '1400m Sprint', distance: 1400 },
+            { value: '1500Mile', label: '1500m Mile', distance: 1500 },
+            { value: '1600Mile', label: '1600m Mile', distance: 1600 },
+            { value: '1800Mile', label: '1800m Mile', distance: 1800 },
+            { value: '2000Medium', label: '2000m Medium', distance: 2000 },
+            { value: '2200Medium', label: '2200m Medium', distance: 2200 },
+            { value: '2300Medium', label: '2300m Medium', distance: 2300 },
+            { value: '2400Medium', label: '2400m Medium', distance: 2400 },
+            { value: '2500Long', label: '2500m Long', distance: 2500 },
+            { value: '2600Long', label: '2600m Long', distance: 2600 },
+            { value: '3000Long', label: '3000m Long', distance: 3000 },
+            { value: '3200Long', label: '3200m Long', distance: 3200 },
+            { value: '3400Long', label: '3400m Long', distance: 3400 },
+            { value: '3600Long', label: '3600m Long', distance: 3600 }
+        ];
+
+        const strategyCoef = {
+            'Front': 0.95,
+            'Pace': 0.89,
+            'Late': 1.0,
+            'End': 0.995
+        };
+
+        const aptMod = {
+            'S': 1.05, 'A': 1.0, 'B': 0.9, 'C': 0.8, 
+            'D': 0.6, 'E': 0.4, 'F': 0.2, 'G': 0.1
+        };
+
+        const moodCoef = {
+            'Awful': 0.96, 'Bad': 0.98, 'Normal': 1.0,
+            'Good': 1.02, 'Great': 1.04
+        };
+
+        const calculateGutsAnalysis = (speed, stamina, power, guts, wit, conditions) => {
+            const distanceInfo = distances.find(d => d.value === conditions.distance);
+            const distance = distanceInfo.distance;
+
+            const mood = moodCoef[conditions.mood];
+            const baseStamina = stamina * mood;
+            const baseSpeed = speed * mood;
+            const basePower = power * mood;
+            const baseGuts = guts * mood;
+            const baseWit = wit * mood;
+
+            const baseRaceSpeed = 20.0 - (distance - 2000) / 1000;
+
+            const strat = conditions.runningStyle;
+            const maxHP = 0.8 * strategyCoef[strat] * baseStamina + distance;
+
+            const gutsModifier = 1.0 + (200 / Math.sqrt(600.0 * baseGuts));
+            const lastSpurtBonus = Math.pow(450 * baseGuts, 0.597) * 0.0001;
+            const spotStruggleSpeed = Math.pow(500 * baseGuts, 0.6) * 0.0001;
+            const spotStruggleDuration = Math.pow(700 * baseGuts, 0.5) * 0.012;
+            const spotStruggleHPMult = (strat === 'Front' ? 1.4 : 0);
+            const duelingSpeed = Math.pow(200 * baseGuts, 0.708) * 0.0001;
+            const duelingAccel = Math.pow(160 * baseGuts, 0.59) * 0.0001;
+            const duelingDuration = 3.0;
+
+            const distApt = aptMod[conditions.distanceApt];
+            const avgSpeedBonus = Math.sqrt(500 * baseSpeed) * distApt * 0.002;
+            
+            const normalPhaseSpeed = baseRaceSpeed * 0.95 + avgSpeedBonus * 0.5;
+            const normalPhaseDistance = distance * 0.67;
+            const normalPhaseTime = normalPhaseDistance / normalPhaseSpeed;
+            const normalPhaseHP = 20.0 * Math.pow(normalPhaseSpeed - baseRaceSpeed + 12.0, 2) / 144.0 * normalPhaseTime;
+
+            const spurtSpeed = baseRaceSpeed * 0.98 + avgSpeedBonus + lastSpurtBonus;
+            const spurtDistance = distance * 0.33;
+            const spurtTime = spurtDistance / spurtSpeed;
+            const spurtPhaseHP = 20.0 * Math.pow(spurtSpeed - baseRaceSpeed + 12.0, 2) / 144.0 * gutsModifier * spurtTime;
+            
+            const startDashAccel = 24.0;
+            const startDashTargetSpeed = 0.85 * baseRaceSpeed;
+            const startDashTime = (startDashTargetSpeed - 3.0) / startDashAccel;
+            const normalAccel = 0.0006 * Math.sqrt(500.0 * basePower);
+            const normalAccelTime = (normalPhaseSpeed - startDashTargetSpeed) / normalAccel;
+            const spurtAccel = 0.0006 * Math.sqrt(500.0 * basePower) * 0.996;
+            const spurtAccelTime = (spurtSpeed - normalPhaseSpeed) / spurtAccel;
+            const totalAccelTime = startDashTime + normalAccelTime + spurtAccelTime;
+
+            let spotStruggleHP = 0;
+            if (strat === 'Front' && conditions.spotStruggleChance > 0) {
+            const spotStruggleSpeedIncrease = spotStruggleSpeed;
+            const adjustedSpeed = normalPhaseSpeed + spotStruggleSpeedIncrease;
+            const spotStruggleBaseHP = 20.0 * Math.pow(adjustedSpeed - baseRaceSpeed + 12.0, 2) / 144.0 * spotStruggleDuration;
+            spotStruggleHP = (spotStruggleBaseHP * spotStruggleHPMult - 20.0 * Math.pow(normalPhaseSpeed - baseRaceSpeed + 12.0, 2) / 144.0 * spotStruggleDuration) * (conditions.spotStruggleChance / 100);
+            }
+
+            let duelingHP = 0;
+            if (conditions.duelingChance > 0) {
+            const duelingSpeedIncrease = duelingSpeed;
+            const adjustedSpeed = spurtSpeed + duelingSpeedIncrease;
+            const duelingBaseHP = 20.0 * Math.pow(adjustedSpeed - baseRaceSpeed + 12.0, 2) / 144.0 * gutsModifier * duelingDuration;
+            duelingHP = (duelingBaseHP - 20.0 * Math.pow(spurtSpeed - baseRaceSpeed + 12.0, 2) / 144.0 * gutsModifier * duelingDuration) * (conditions.duelingChance / 100);
+            }
+
+            const totalHPNeeded = normalPhaseHP + spurtPhaseHP + spotStruggleHP + duelingHP;
+            const minSpeed = 0.85 * baseRaceSpeed + Math.sqrt(200.0 * baseGuts) * 0.001;
+
+            return {
+            maxHP,
+            totalHPNeeded,
+            normalPhaseHP,
+            spurtPhaseHP,
+            spotStruggleHP,
+            duelingHP,
+            gutsModifier,
+            minSpeed,
+            lastSpurtBonus,
+            spotStruggleSpeed,
+            spotStruggleDuration,
+            duelingSpeed,
+            duelingAccel,
+            duelingDuration,
+            totalAccelTime,
+            spurtTime,
+            hasEnough: maxHP >= totalHPNeeded,
+            shortage: Math.max(0, totalHPNeeded - maxHP),
+            distance
+            };
+        };
+
+        const calculateEquivalencies = () => {
+            const current = calculateGutsAnalysis(
+            stats.speed, stats.stamina, stats.power, stats.guts, stats.wit, raceConditions
+            );
+
+            const withLessGuts = calculateGutsAnalysis(
+            stats.speed, stats.stamina, stats.power, Math.max(1, stats.guts - 100), stats.wit, raceConditions
+            );
+
+            const withMoreGuts = calculateGutsAnalysis(
+            stats.speed, stats.stamina, stats.power, stats.guts + 100, stats.wit, raceConditions
+            );
+            
+            const withMoreSpeed = calculateGutsAnalysis(
+            stats.speed + 100, stats.stamina, stats.power, stats.guts, stats.wit, raceConditions
+            );
+            
+            const withMorePower = calculateGutsAnalysis(
+            stats.speed, stats.stamina, stats.power + 100, stats.guts, stats.wit, raceConditions
+            );
+
+            const distApt = aptMod[raceConditions.distanceApt];
+            const mood = moodCoef[raceConditions.mood];
+            const baseSpeed = stats.speed * mood;
+            const avgSpeedBonus = Math.sqrt(500 * baseSpeed) * distApt * 0.002;
+            const baseRaceSpeed = 20.0 - (current.distance - 2000) / 1000;
+            
+            const normalPhaseSpeed = baseRaceSpeed * 0.95 + avgSpeedBonus * 0.5;
+            const spurtSpeed = baseRaceSpeed * 0.98 + avgSpeedBonus + current.lastSpurtBonus;
+            const totalRaceTime = (current.distance * 0.67 / normalPhaseSpeed) + (current.distance * 0.33 / spurtSpeed);
+
+            const hpSavedPer100Guts = withLessGuts.totalHPNeeded - current.totalHPNeeded;
+            const staminaEquivPer100Guts = hpSavedPer100Guts / (0.8 * strategyCoef[raceConditions.runningStyle]);
+
+            const speedBonusDiff = Math.sqrt(500 * (baseSpeed + 100)) * distApt * 0.002 - avgSpeedBonus;
+            const spurtSpeedWith100Speed = baseRaceSpeed * 0.98 + avgSpeedBonus + speedBonusDiff + current.lastSpurtBonus;
+            const spurtTimeWith100Speed = (current.distance * 0.33) / spurtSpeedWith100Speed;
+            const timeSavedBy100Speed = (current.distance * 0.33 / spurtSpeed) - spurtTimeWith100Speed;
+            const distanceGainedBy100Speed = timeSavedBy100Speed * spurtSpeed;
+            
+            const spurtSpeedWith100Guts = spurtSpeed + (withMoreGuts.lastSpurtBonus - current.lastSpurtBonus);
+            const spurtTimeWith100Guts = (current.distance * 0.33) / spurtSpeedWith100Guts;
+            const timeSavedByLastSpurt = (current.distance * 0.33 / spurtSpeed) - spurtTimeWith100Guts;
+            const distanceFromLastSpurt = timeSavedByLastSpurt * spurtSpeed;
+            
+            let distanceFromSpotStruggle = 0;
+            if (raceConditions.runningStyle === 'Front' && raceConditions.spotStruggleChance > 0) {
+            const spotStruggleSpeedGain = withMoreGuts.spotStruggleSpeed - current.spotStruggleSpeed;
+            distanceFromSpotStruggle = spotStruggleSpeedGain * current.spotStruggleDuration * (raceConditions.spotStruggleChance / 100);
+            }
+            
+            let distanceFromDueling = 0;
+            if (raceConditions.duelingChance > 0) {
+            const duelingSpeedGain = withMoreGuts.duelingSpeed - current.duelingSpeed;
+            distanceFromDueling = duelingSpeedGain * current.duelingDuration * (raceConditions.duelingChance / 100);
+            }
+            
+            const totalDistanceFrom100Guts = distanceFromLastSpurt + distanceFromSpotStruggle + distanceFromDueling;
+            const speedEquivFromDistance = totalDistanceFrom100Guts > 0 ?
+            (totalDistanceFrom100Guts / distanceGainedBy100Speed) * 100 : 0;
+
+            const baseAccel = 0.0006;
+            const accelCurrent = baseAccel * Math.sqrt(500.0 * stats.power * mood);
+            const accelWith100Power = baseAccel * Math.sqrt(500.0 * (stats.power + 100) * mood);
+            const accelGainFrom100Power = accelWith100Power - accelCurrent;
+            
+            const accelGainFromDueling = current.duelingAccel * (raceConditions.duelingChance / 100);
+            const powerEquivOfDuelingAccel = accelGainFrom100Power > 0 && current.totalAccelTime > 0 ?
+            (accelGainFromDueling / accelGainFrom100Power) * (current.duelingDuration / current.totalAccelTime) * 100 : 0;
+
+            const gutsToCompensate = current.shortage > 0 && hpSavedPer100Guts > 0 ? 
+            (current.shortage / hpSavedPer100Guts * 100) : 0;
+            const staminaToCompensate = current.shortage;
+            const whiteRecoveries = Math.ceil(current.shortage / (current.maxHP * 0.015));
+            const goldRecoveries = Math.ceil(current.shortage / (current.maxHP * 0.055));
+
+            setResults({
+            ...current,
+            totalRaceTime,
+            spurtTime: current.spurtTime,
+            totalAccelTime: current.totalAccelTime,
+            hpSavedPer100Guts,
+            staminaEquivPer100Guts,
+            distanceGainedBy100Speed,
+            totalDistanceFrom100Guts,
+            distanceFromLastSpurt,
+            distanceFromSpotStruggle,
+            distanceFromDueling,
+            speedEquivFromDistance,
+            accelGainFrom100Power,
+            powerEquivOfDuelingAccel,
+            gutsToCompensate,
+            staminaToCompensate,
+            whiteRecoveries,
+            goldRecoveries
+            });
+        };
+
+        useEffect(() => {
+            calculateEquivalencies();
+        }, [stats, raceConditions]);
+
+        const handlePresetChange = (presetName) => {
+            setSelectedPreset(presetName);
+            setRaceConditions(presets[presetName].conditions);
+        };
+
+        return (
+            <div className="p-6 max-w-7xl mx-auto bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+            <h1 className="text-3xl font-bold mb-2 text-purple-900">Uma Musume Guts Equivalency Calculator</h1>
+            <p className="text-sm text-gray-600 mb-4">Analyzes Guts value through Stamina savings and Speed bonuses</p>
+            
+            {/* Parameters Section */}
+            <div className="bg-white p-4 rounded-lg shadow-lg mb-4">
+                <div className="flex justify-between items-center mb-3">
+                <h2 className="text-lg font-semibold text-purple-800">Parameters</h2>
+                <select
+                    value={selectedPreset}
+                    onChange={(e) => handlePresetChange(e.target.value)}
+                    className="px-3 py-1 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium text-sm"
+                >
+                    {Object.keys(presets).map(preset => (
+                    <option key={preset} value={preset}>{preset}</option>
+                    ))}
+                </select>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Stats */}
+                <div>
+                    <h3 className="font-semibold mb-2 text-purple-700 text-sm">Uma Stats</h3>
+                    <div className="grid grid-cols-5 gap-2">
+                    {Object.keys(stats).map(stat => (
+                        <div key={stat}>
+                        <label className="block text-xs font-medium mb-1 capitalize text-gray-600">{stat}</label>
+                        <input
+                            type="number"
+                            value={stats[stat]}
+                            onChange={(e) => setStats({...stats, [stat]: Math.max(1, Math.min(2000, parseInt(e.target.value) || 0))})}
+                            className="w-full px-2 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-center font-semibold text-sm"
+                        />
+                        </div>
+                    ))}
+                    </div>
+                </div>
+
+                {/* Race Conditions */}
+                <div>
+                    <h3 className="font-semibold mb-2 text-purple-700 text-sm">Race Conditions</h3>
+                    <div className="grid grid-cols-5 gap-2">
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Distance</label>
+                        <select
+                        value={raceConditions.distance}
+                        onChange={(e) => setRaceConditions({...raceConditions, distance: e.target.value})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
+                        >
+                        {distances.map(d => (
+                            <option key={d.value} value={d.value}>{d.label}</option>
+                        ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Style</label>
+                        <select
+                        value={raceConditions.runningStyle}
+                        onChange={(e) => setRaceConditions({...raceConditions, runningStyle: e.target.value})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
+                        >
+                        <option value="Front">Front</option>
+                        <option value="Pace">Pace</option>
+                        <option value="Late">Late</option>
+                        <option value="End">End</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Surface</label>
+                        <select
+                        value={raceConditions.surface}
+                        onChange={(e) => setRaceConditions({...raceConditions, surface: e.target.value})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
+                        >
+                        <option value="Turf">Turf</option>
+                        <option value="Dirt">Dirt</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Condition</label>
+                        <select
+                        value={raceConditions.trackCondition}
+                        onChange={(e) => setRaceConditions({...raceConditions, trackCondition: e.target.value})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
+                        >
+                        <option value="Firm">Firm</option>
+                        <option value="Good">Good</option>
+                        <option value="Yielding">Yield</option>
+                        <option value="Soft">Soft</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Weather</label>
+                        <select
+                        value={raceConditions.weather}
+                        onChange={(e) => setRaceConditions({...raceConditions, weather: e.target.value})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
+                        >
+                        <option value="Sunny">Sunny</option>
+                        <option value="Cloudy">Cloud</option>
+                        <option value="Rain">Rain</option>
+                        <option value="Snow">Snow</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Mood</label>
+                        <select
+                        value={raceConditions.mood}
+                        onChange={(e) => setRaceConditions({...raceConditions, mood: e.target.value})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
+                        >
+                        {['Awful', 'Bad', 'Normal', 'Good', 'Great'].map(m => (
+                            <option key={m} value={m}>{m}</option>
+                        ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Dist. Apt</label>
+                        <select
+                        value={raceConditions.distanceApt}
+                        onChange={(e) => setRaceConditions({...raceConditions, distanceApt: e.target.value})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
+                        >
+                        {['S', 'A', 'B', 'C', 'D', 'E', 'F', 'G'].map(apt => (
+                            <option key={apt} value={apt}>{apt}</option>
+                        ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Surf. Apt</label>
+                        <select
+                        value={raceConditions.surfaceApt}
+                        onChange={(e) => setRaceConditions({...raceConditions, surfaceApt: e.target.value})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
+                        >
+                        {['S', 'A', 'B', 'C', 'D', 'E', 'F', 'G'].map(apt => (
+                            <option key={apt} value={apt}>{apt}</option>
+                        ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Spot %</label>
+                        <input
+                        type="number"
+                        value={raceConditions.spotStruggleChance}
+                        onChange={(e) => setRaceConditions({...raceConditions, spotStruggleChance: Math.max(0, Math.min(100, parseInt(e.target.value) || 0))})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-center"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium mb-1 text-gray-600">Duel %</label>
+                        <input
+                        type="number"
+                        value={raceConditions.duelingChance}
+                        onChange={(e) => setRaceConditions({...raceConditions, duelingChance: Math.max(0, Math.min(100, parseInt(e.target.value) || 0))})}
+                        className="w-full px-1 py-1 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-center"
+                        />
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            {results && (
+                <>
+                {/* Guts Equivalencies - Main Numbers */}
+                <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-800">Guts Equivalencies (per 100 Guts)</h2>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                    {/* Stamina */}
+                    <div className="text-center p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                        <div className="text-sm font-medium text-gray-600 mb-1">Stamina Stat Equivalent</div>
+                        <div className="text-4xl font-bold text-green-700 mb-2">≈ {results.staminaEquivPer100Guts.toFixed(0)}</div>
+                        <div className="text-xs text-gray-600">HP saved: {results.hpSavedPer100Guts.toFixed(1)}</div>
+                    </div>
+
+                    {/* Speed */}
+                    <div className="text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                        <div className="text-sm font-medium text-gray-600 mb-1">Speed Stat Equivalent</div>
+                        <div className="text-4xl font-bold text-blue-700 mb-2">≈ {results.speedEquivFromDistance.toFixed(0)}</div>
+                        <div className="text-xs text-gray-600">
+                        Dist: +{results.totalDistanceFrom100Guts.toFixed(2)}m
+                        (Spurt: {results.distanceFromLastSpurt.toFixed(2)}m, 
+                        Spot: {results.distanceFromSpotStruggle.toFixed(2)}m, 
+                        Duel: {results.distanceFromDueling.toFixed(2)}m)
+                        </div>
+                    </div>
+
+                    {/* Power */}
+                    <div className="text-center p-4 bg-violet-50 rounded-lg border-2 border-violet-200">
+                        <div className="text-sm font-medium text-gray-600 mb-1">Power Stat Equivalent</div>
+                        <div className="text-4xl font-bold text-violet-700 mb-2">≈ {results.powerEquivOfDuelingAccel.toFixed(1)}</div>
+                        <div className="text-xs text-gray-600">
+                        +100 Pwr: +{(results.accelGainFrom100Power).toFixed(5)} m/s², 
+                        Duel: +{(results.duelingAccel * raceConditions.duelingChance / 100).toFixed(5)} m/s² 
+                        ({results.duelingDuration.toFixed(1)}s/{results.totalAccelTime.toFixed(1)}s)
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                {/* HP Analysis */}
+                <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-800">Stamina Analysis</h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                        <div className="text-xs text-gray-600">Max HP</div>
+                        <div className="text-xl font-bold text-blue-700">{results.maxHP.toFixed(0)}</div>
+                    </div>
+                    
+                    <div className="p-4 bg-orange-50 rounded-lg">
+                        <div className="text-xs text-gray-600">HP Needed</div>
+                        <div className="text-xl font-bold text-orange-700">{results.totalHPNeeded.toFixed(0)}</div>
+                    </div>
+
+                    <div className={`p-4 rounded-lg ${results.hasEnough ? 'bg-green-50' : 'bg-red-50'}`}>
+                        <div className="text-xs text-gray-600">Status</div>
+                        <div className={`text-xl font-bold ${results.hasEnough ? 'text-green-700' : 'text-red-700'}`}>
+                        {results.hasEnough ? 'OK' : `Missing HP: ${results.shortage.toFixed(0)}`}
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                        <div className="text-xs text-gray-600">Guts HP Mult.</div>
+                        <div className="text-xl font-bold text-purple-700">{results.gutsModifier.toFixed(3)}x</div>
+                    </div>
+                    </div>
+
+                    {!results.hasEnough && (
+                    <div className="p-4 bg-red-50 rounded-lg border-2 border-red-200">
+                        <div className="font-semibold text-red-800 mb-2">Missing HP: {results.shortage.toFixed(0)}</div>
+                        <div className="text-sm text-gray-700">
+                        Add <span className="font-bold text-red-700">{results.gutsToCompensate.toFixed(0)} Guts</span>, {' '}
+                        <span className="font-bold text-red-700">{results.staminaToCompensate.toFixed(0)} Stamina</span>, {' '}
+                        <span className="font-bold text-red-700">{results.goldRecoveries} gold recoveries</span> or {' '}
+                        <span className="font-bold text-red-700">{results.whiteRecoveries} white recoveries</span>
+                        </div>
+                    </div>
+                    )}
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm mt-4">
+                    <div className="p-2 bg-gray-50 rounded">
+                        <div className="text-xs text-gray-600">Normal Phase</div>
+                        <div className="font-semibold">{results.normalPhaseHP.toFixed(0)} HP</div>
+                    </div>
+                    <div className="p-2 bg-gray-50 rounded">
+                        <div className="text-xs text-gray-600">Spurt Phase</div>
+                        <div className="font-semibold">{results.spurtPhaseHP.toFixed(0)} HP</div>
+                    </div>
+                    <div className="p-2 bg-gray-50 rounded">
+                        <div className="text-xs text-gray-600">Spot Struggle</div>
+                        <div className="font-semibold">{results.spotStruggleHP.toFixed(0)} HP</div>
+                    </div>
+                    <div className="p-2 bg-gray-50 rounded">
+                        <div className="text-xs text-gray-600">Dueling</div>
+                        <div className="font-semibold">{results.duelingHP.toFixed(0)} HP</div>
+                    </div>
+                    </div>
+                </div>
+
+                {/* Race Performance */}
+                <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-800">Race Performance</h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="p-4 bg-indigo-50 rounded-lg">
+                        <div className="text-sm font-medium mb-1">Total Race Time</div>
+                        <div className="text-3xl font-bold text-indigo-700">{results.totalRaceTime.toFixed(2)}s</div>
+                    </div>
+                    
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                        <div className="text-sm font-medium mb-1">Distance from +100 Speed</div>
+                        <div className="text-3xl font-bold text-blue-700">+{results.distanceGainedBy100Speed.toFixed(2)}m</div>
+                        <div className="text-xs text-gray-600 mt-1">In final leg/spurt phases</div>
+                    </div>
+                    </div>
+                    
+                    <h3 className="font-semibold text-lg text-purple-700 mb-3">Guts Speed Bonuses</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-pink-50 rounded-lg">
+                        <div className="text-sm font-medium mb-1">Last Spurt</div>
+                        <div className="text-2xl font-bold text-pink-700">+{(results.lastSpurtBonus).toFixed(4)}</div>
+                        <div className="text-xs text-gray-600">m/s for {results.spurtTime.toFixed(1)}s</div>
+                        <div className="text-xs text-gray-600 mt-1">Last 33% of race distance</div>
+                    </div>
+
+                    <div className="p-4 bg-rose-50 rounded-lg">
+                        <div className="text-sm font-medium mb-1">Spot Struggle</div>
+                        <div className="text-2xl font-bold text-rose-700">+{(results.spotStruggleSpeed).toFixed(4)}</div>
+                        <div className="text-xs text-gray-600">m/s for {results.spotStruggleDuration.toFixed(1)}s</div>
+                        {raceConditions.runningStyle !== 'Front' && <div className="text-xs text-red-600 mt-1">Not Front Runner!</div>}
+                    </div>
+
+                    <div className="p-4 bg-red-50 rounded-lg">
+                        <div className="text-sm font-medium mb-1">Dueling</div>
+                        <div className="text-2xl font-bold text-red-700">+{(results.duelingSpeed).toFixed(4)}</div>
+                        <div className="text-xs text-gray-600">m/s for {results.duelingDuration.toFixed(1)}s</div>
+                        <div className="text-xs text-gray-600">+{(results.duelingAccel).toFixed(5)} m/s² accel</div>
+                    </div>
+                    </div>
+                </div>
+
+                <div className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700">
+                    <p className="font-semibold mb-2">📝 Notes:</p>
+                    <p className="mb-1">• Distance calculations show actual meters gained during speed bonus periods</p>
+                    <p className="mb-1">• Speed equivalency is based on comparing distance gained: how much Speed gives same distance as 100 Guts</p>
+                    <p className="mb-1">• Spot Struggle only triggers for Front Runners during early race (150m-section 6)</p>
+                    <p className="mb-1">• Dueling occurs on final straight when close to other umas</p>
+                    <p className="mb-1">• Power comparison shows acceleration gain; Dueling gives temporary accel boost</p>
+                    <p className="mb-1">• White recoveries restore 1.5% max HP, gold recoveries restore 5.5% max HP</p>
+                    <p>• All values weighted by competition probabilities you set above</p>
+                </div>
+                </>
+            )}
+
+            <div className="mt-6 text-center">
+                <button
+                onClick={() => {
+                    if (!results) return;
+                    const csv = `Speed,Stamina,Power,Guts,Wit,Distance,Style,Surface,Condition,Weather,RaceTime,MaxHP,HPNeeded,Shortage,StaminaEquiv,SpeedEquiv,PowerEquiv,Distance100Speed,Distance100Guts,SpotStruggle%,Dueling%\n${stats.speed},${stats.stamina},${stats.power},${stats.guts},${stats.wit},${results.distance},${raceConditions.runningStyle},${raceConditions.surface},${raceConditions.trackCondition},${raceConditions.weather},${results.totalRaceTime.toFixed(2)},${results.maxHP.toFixed(0)},${results.totalHPNeeded.toFixed(0)},${results.shortage.toFixed(0)},${results.staminaEquivPer100Guts.toFixed(0)},${results.speedEquivFromDistance.toFixed(0)},${results.powerEquivOfDuelingAccel.toFixed(1)},${results.distanceGainedBy100Speed.toFixed(2)},${results.totalDistanceFrom100Guts.toFixed(2)},${raceConditions.spotStruggleChance},${raceConditions.duelingChance}`;
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'guts_equivalency_analysis.csv';
+                    a.click();
+                }}
+                className="px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-lg font-medium text-lg"
+                >
+                📊 Export to CSV
+                </button>
+            </div>
+            </div>
+        );
+        }
+        
+        ReactDOM.render(<GutsCalculator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
