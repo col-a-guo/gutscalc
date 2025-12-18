@@ -184,19 +184,19 @@
             );
 
             const withLessGuts = calculateGutsAnalysis(
-            stats.speed, stats.stamina, stats.power, Math.max(1, stats.guts - 100), stats.wit, raceConditions
+            stats.speed, stats.stamina, stats.power, Math.max(1, stats.guts - 10), stats.wit, raceConditions
             );
 
             const withMoreGuts = calculateGutsAnalysis(
-            stats.speed, stats.stamina, stats.power, stats.guts + 100, stats.wit, raceConditions
+            stats.speed, stats.stamina, stats.power, stats.guts + 10, stats.wit, raceConditions
             );
             
             const withMoreSpeed = calculateGutsAnalysis(
-            stats.speed + 100, stats.stamina, stats.power, stats.guts, stats.wit, raceConditions
+            stats.speed + 10, stats.stamina, stats.power, stats.guts, stats.wit, raceConditions
             );
             
             const withMorePower = calculateGutsAnalysis(
-            stats.speed, stats.stamina, stats.power + 100, stats.guts, stats.wit, raceConditions
+            stats.speed, stats.stamina, stats.power + 10, stats.guts, stats.wit, raceConditions
             );
 
             const distApt = aptMod[raceConditions.distanceApt];
@@ -209,18 +209,18 @@
             const spurtSpeed = baseRaceSpeed * 0.98 + avgSpeedBonus + current.lastSpurtBonus;
             const totalRaceTime = (current.distance * 0.67 / normalPhaseSpeed) + (current.distance * 0.33 / spurtSpeed);
 
-            const hpSavedPer100Guts = withLessGuts.totalHPNeeded - current.totalHPNeeded;
-            const staminaEquivPer100Guts = hpSavedPer100Guts / (0.8 * strategyCoef[raceConditions.runningStyle]);
+            const hpSavedPer10Guts = withLessGuts.totalHPNeeded - current.totalHPNeeded;
+            const staminaEquivPer10Guts = hpSavedPer10Guts / (0.8 * strategyCoef[raceConditions.runningStyle]);
 
-            const speedBonusDiff = Math.sqrt(500 * (baseSpeed + 100)) * distApt * 0.002 - avgSpeedBonus;
-            const spurtSpeedWith100Speed = baseRaceSpeed * 0.98 + avgSpeedBonus + speedBonusDiff + current.lastSpurtBonus;
-            const spurtTimeWith100Speed = (current.distance * 0.33) / spurtSpeedWith100Speed;
-            const timeSavedBy100Speed = (current.distance * 0.33 / spurtSpeed) - spurtTimeWith100Speed;
-            const distanceGainedBy100Speed = timeSavedBy100Speed * spurtSpeed;
+            const speedBonusDiff = Math.sqrt(500 * (baseSpeed + 10)) * distApt * 0.002 - avgSpeedBonus;
+            const spurtSpeedWith10speed = baseRaceSpeed * 0.98 + avgSpeedBonus + speedBonusDiff + current.lastSpurtBonus;
+            const spurtTimeWith10speed = (current.distance * 0.33) / spurtSpeedWith10speed;
+            const timeSavedBy10speed = (current.distance * 0.33 / spurtSpeed) - spurtTimeWith10speed;
+            const distanceGainedBy10speed = timeSavedBy10speed * spurtSpeed;
             
-            const spurtSpeedWith100Guts = spurtSpeed + (withMoreGuts.lastSpurtBonus - current.lastSpurtBonus);
-            const spurtTimeWith100Guts = (current.distance * 0.33) / spurtSpeedWith100Guts;
-            const timeSavedByLastSpurt = (current.distance * 0.33 / spurtSpeed) - spurtTimeWith100Guts;
+            const spurtSpeedWith10Guts = spurtSpeed + (withMoreGuts.lastSpurtBonus - current.lastSpurtBonus);
+            const spurtTimeWith10Guts = (current.distance * 0.33) / spurtSpeedWith10Guts;
+            const timeSavedByLastSpurt = (current.distance * 0.33 / spurtSpeed) - spurtTimeWith10Guts;
             const distanceFromLastSpurt = timeSavedByLastSpurt * spurtSpeed;
             
             let distanceFromSpotStruggle = 0;
@@ -235,21 +235,21 @@
             distanceFromDueling = duelingSpeedGain * current.duelingDuration * (raceConditions.duelingChance / 100);
             }
             
-            const totalDistanceFrom100Guts = distanceFromLastSpurt + distanceFromSpotStruggle;
-            const speedEquivFromDistance = totalDistanceFrom100Guts > 0 ?
-            (totalDistanceFrom100Guts / distanceGainedBy100Speed) * 100 : 0;
+            const totalDistanceFrom10Guts = distanceFromLastSpurt + distanceFromSpotStruggle;
+            const speedEquivFromDistance = totalDistanceFrom10Guts > 0 ?
+            (totalDistanceFrom10Guts / distanceGainedBy10speed) * 10 : 0;
 
             const baseAccel = 0.0006;
             const accelCurrent = baseAccel * Math.sqrt(500.0 * stats.power * mood);
-            const accelWith100Power = baseAccel * Math.sqrt(500.0 * (stats.power + 100) * mood);
-            const accelGainFrom100Power = accelWith100Power - accelCurrent;
+            const accelWith10Power = baseAccel * Math.sqrt(500.0 * (stats.power + 10) * mood);
+            const accelGainFrom10Power = accelWith10Power - accelCurrent;
             
             const accelGainFromDueling = (withMoreGuts.duelingSpeed - current.duelingSpeed) * (raceConditions.duelingChance / 100);
-            const powerEquivOfDuelingAccel = accelGainFrom100Power > 0 && current.totalAccelTime > 0 ?
-            (accelGainFromDueling / accelGainFrom100Power) * (current.duelingDuration / current.totalAccelTime) * 100 : 0;
+            const powerEquivOfDuelingAccel = accelGainFrom10Power > 0 && current.totalAccelTime > 0 ?
+            (accelGainFromDueling / accelGainFrom10Power) * (current.duelingDuration / current.totalAccelTime) * 10 : 0;
 
-            const gutsToCompensate = current.shortage > 0 && hpSavedPer100Guts > 0 ? 
-            (current.shortage / hpSavedPer100Guts * 100) : 0;
+            const gutsToCompensate = current.shortage > 0 && hpSavedPer10Guts > 0 ? 
+            (current.shortage / hpSavedPer10Guts * 10) : 0;
             const staminaToCompensate = current.shortage;
             const whiteRecoveries = Math.ceil(current.shortage / (current.maxHP * 0.015));
             const goldRecoveries = Math.ceil(current.shortage / (current.maxHP * 0.055));
@@ -259,15 +259,15 @@
             totalRaceTime,
             spurtTime: current.spurtTime,
             totalAccelTime: current.totalAccelTime,
-            hpSavedPer100Guts,
-            staminaEquivPer100Guts,
-            distanceGainedBy100Speed,
-            totalDistanceFrom100Guts,
+            hpSavedPer10Guts,
+            staminaEquivPer10Guts,
+            distanceGainedBy10speed,
+            totalDistanceFrom10Guts,
             distanceFromLastSpurt,
             distanceFromSpotStruggle,
             distanceFromDueling,
             speedEquivFromDistance,
-            accelGainFrom100Power,
+            accelGainFrom10Power,
             powerEquivOfDuelingAccel,
             gutsToCompensate,
             staminaToCompensate,
@@ -297,7 +297,7 @@
                 <select
                     value={selectedPreset}
                     onChange={(e) => handlePresetChange(e.target.value)}
-                    className="px-3 py-1 border-2 border-teal-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 font-medium text-sm"
+                    className="px-3 py-1 border-2 border-teal-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-300 font-medium text-sm"
                 >
                     {Object.keys(presets).map(preset => (
                     <option key={preset} value={preset}>{preset}</option>
@@ -317,7 +317,7 @@
                             type="number"
                             value={stats[stat]}
                             onChange={(e) => setStats({...stats, [stat]: Math.max(1, Math.min(2000, parseInt(e.target.value) || 0))})}
-                            className="w-full px-2 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-center font-semibold text-sm"
+                            className="w-full px-2 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-center font-semibold text-sm"
                         />
                         </div>
                     ))}
@@ -333,7 +333,7 @@
                         <select
                         value={raceConditions.distance}
                         onChange={(e) => setRaceConditions({...raceConditions, distance: e.target.value})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
                         >
                         {distances.map(d => (
                             <option key={d.value} value={d.value}>{d.label}</option>
@@ -346,7 +346,7 @@
                         <select
                         value={raceConditions.runningStyle}
                         onChange={(e) => setRaceConditions({...raceConditions, runningStyle: e.target.value})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
                         >
                         <option value="Front">Front</option>
                         <option value="Pace">Pace</option>
@@ -360,7 +360,7 @@
                         <select
                         value={raceConditions.surface}
                         onChange={(e) => setRaceConditions({...raceConditions, surface: e.target.value})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
                         >
                         <option value="Turf">Turf</option>
                         <option value="Dirt">Dirt</option>
@@ -372,7 +372,7 @@
                         <select
                         value={raceConditions.trackCondition}
                         onChange={(e) => setRaceConditions({...raceConditions, trackCondition: e.target.value})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
                         >
                         <option value="Firm">Firm</option>
                         <option value="Good">Good</option>
@@ -386,7 +386,7 @@
                         <select
                         value={raceConditions.weather}
                         onChange={(e) => setRaceConditions({...raceConditions, weather: e.target.value})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
                         >
                         <option value="Sunny">Sunny</option>
                         <option value="Cloudy">Cloud</option>
@@ -400,7 +400,7 @@
                         <select
                         value={raceConditions.mood}
                         onChange={(e) => setRaceConditions({...raceConditions, mood: e.target.value})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
                         >
                         {['Awful', 'Bad', 'Normal', 'Good', 'Great'].map(m => (
                             <option key={m} value={m}>{m}</option>
@@ -413,7 +413,7 @@
                         <select
                         value={raceConditions.distanceApt}
                         onChange={(e) => setRaceConditions({...raceConditions, distanceApt: e.target.value})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
                         >
                         {['S', 'A', 'B', 'C', 'D', 'E', 'F', 'G'].map(apt => (
                             <option key={apt} value={apt}>{apt}</option>
@@ -426,7 +426,7 @@
                         <select
                         value={raceConditions.surfaceApt}
                         onChange={(e) => setRaceConditions({...raceConditions, surfaceApt: e.target.value})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs"
                         >
                         {['S', 'A', 'B', 'C', 'D', 'E', 'F', 'G'].map(apt => (
                             <option key={apt} value={apt}>{apt}</option>
@@ -440,7 +440,7 @@
                         type="number"
                         value={raceConditions.spotStruggleChance}
                         onChange={(e) => setRaceConditions({...raceConditions, spotStruggleChance: Math.max(0, Math.min(100, parseInt(e.target.value) || 0))})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs text-center"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs text-center"
                         />
                     </div>
 
@@ -450,7 +450,7 @@
                         type="number"
                         value={raceConditions.duelingChance}
                         onChange={(e) => setRaceConditions({...raceConditions, duelingChance: Math.max(0, Math.min(100, parseInt(e.target.value) || 0))})}
-                        className="w-full px-1 py-1 border border-teal-100 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs text-center"
+                        className="w-full px-1 py-1 border border-teal-50 rounded focus:outline-none focus:ring-2 focus:ring-teal-300 text-xs text-center"
                         />
                     </div>
                     </div>
@@ -462,14 +462,14 @@
                 <>
                 {/* Guts Equivalencies - Main Numbers */}
                 <div className="bg-slate p-6 rounded-lg shadow-lg mb-6">
-                    <h2 className="text-2xl font-semibold mb-4 text-teal-600">Guts Equivalencies (per 100 Guts)</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-teal-600">Guts Equivalencies (per 10 Guts)</h2>
                     
                     <div className="grid grid-cols-3 gap-4">
                     {/* Stamina */}
                     <div className="text-center p-4 bg-green-50 rounded-lg border-2 border-green-200">
                         <div className="text-sm font-medium text-gray-600 mb-1">Stamina Stat Equivalent</div>
-                        <div className="text-4xl font-bold text-green-700 mb-2">≈ {results.staminaEquivPer100Guts.toFixed(0)}</div>
-                        <div className="text-xs text-gray-600">HP saved: {results.hpSavedPer100Guts.toFixed(1)}</div>
+                        <div className="text-4xl font-bold text-green-700 mb-2">≈ {results.staminaEquivPer10Guts.toFixed(0)}</div>
+                        <div className="text-xs text-gray-600">HP saved: {results.hpSavedPer10Guts.toFixed(1)}</div>
                     </div>
 
                     {/* Speed */}
@@ -477,7 +477,7 @@
                         <div className="text-sm font-medium text-gray-600 mb-1">Speed Stat Equivalent</div>
                         <div className="text-4xl font-bold text-blue-700 mb-2">≈ {results.speedEquivFromDistance.toFixed(0)}</div>
                         <div className="text-xs text-gray-600">
-                        Dist: +{results.totalDistanceFrom100Guts.toFixed(2)}m
+                        Dist: +{results.totalDistanceFrom10Guts.toFixed(2)}m
                         (Spurt: {results.distanceFromLastSpurt.toFixed(2)}m, 
                         Spot: {results.distanceFromSpotStruggle.toFixed(2)}m, 
                         Duel: {results.distanceFromDueling.toFixed(2)}m)
@@ -489,7 +489,7 @@
                         <div className="text-sm font-medium text-gray-600 mb-1">Power Stat Equivalent</div>
                         <div className="text-4xl font-bold text-violet-700 mb-2">≈ {results.powerEquivOfDuelingAccel.toFixed(1)}</div>
                         <div className="text-xs text-gray-600">
-                        +100 Pwr: +{(results.accelGainFrom100Power).toFixed(5)} m/s², 
+                        +10 Pwr: +{(results.accelGainFrom10Power).toFixed(5)} m/s², 
                         Duel: +{(results.duelingAccel * raceConditions.duelingChance / 100).toFixed(5)} m/s² 
                         ({results.duelingDuration.toFixed(1)}s/{results.totalAccelTime.toFixed(1)}s)
                         </div>
@@ -568,8 +568,8 @@
                     </div>
                     
                     <div className="p-4 bg-blue-50 rounded-lg">
-                        <div className="text-sm font-medium mb-1">Distance from +100 Speed</div>
-                        <div className="text-3xl font-bold text-blue-700">+{results.distanceGainedBy100Speed.toFixed(2)}m</div>
+                        <div className="text-sm font-medium mb-1">Distance from +10 Speed</div>
+                        <div className="text-3xl font-bold text-blue-700">+{results.distanceGainedBy10Speed.toFixed(2)}m</div>
                         <div className="text-xs text-gray-600 mt-1">In final leg/spurt phases</div>
                     </div>
                     </div>
@@ -599,10 +599,10 @@
                     </div>
                 </div>
 
-                <div className="bg-gray-100 p-4 rounded-lg text-sm text-gray-700">
+                <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
                     <p className="font-semibold mb-2">📝 Notes:</p>
                     <p className="mb-1">• Distance calculations show actual meters gained during speed bonus periods</p>
-                    <p className="mb-1">• Speed equivalency is based on comparing distance gained: how much Speed gives same distance as 100 Guts</p>
+                    <p className="mb-1">• Speed equivalency is based on comparing distance gained: how much Speed gives same distance as 10 Guts</p>
                     <p className="mb-1">• Spot Struggle only triggers for Front Runners during early race (150m-section 6)</p>
                     <p className="mb-1">• Dueling occurs on final straight when close to other umas</p>
                     <p className="mb-1">• Power comparison shows acceleration gain; Dueling gives temporary accel boost</p>
@@ -616,7 +616,7 @@
                 <button
                 onClick={() => {
                     if (!results) return;
-                    const csv = `Speed,Stamina,Power,Guts,Wit,Distance,Style,Surface,Condition,Weather,RaceTime,MaxHP,HPNeeded,Shortage,StaminaEquiv,SpeedEquiv,PowerEquiv,Distance100Speed,Distance100Guts,SpotStruggle%,Dueling%\n${stats.speed},${stats.stamina},${stats.power},${stats.guts},${stats.wit},${results.distance},${raceConditions.runningStyle},${raceConditions.surface},${raceConditions.trackCondition},${raceConditions.weather},${results.totalRaceTime.toFixed(2)},${results.maxHP.toFixed(0)},${results.totalHPNeeded.toFixed(0)},${results.shortage.toFixed(0)},${results.staminaEquivPer100Guts.toFixed(0)},${results.speedEquivFromDistance.toFixed(0)},${results.powerEquivOfDuelingAccel.toFixed(1)},${results.distanceGainedBy100Speed.toFixed(2)},${results.totalDistanceFrom100Guts.toFixed(2)},${raceConditions.spotStruggleChance},${raceConditions.duelingChance}`;
+                    const csv = `Speed,Stamina,Power,Guts,Wit,Distance,Style,Surface,Condition,Weather,RaceTime,MaxHP,HPNeeded,Shortage,StaminaEquiv,SpeedEquiv,PowerEquiv,Distance10speed,Distance10Guts,SpotStruggle%,Dueling%\n${stats.speed},${stats.stamina},${stats.power},${stats.guts},${stats.wit},${results.distance},${raceConditions.runningStyle},${raceConditions.surface},${raceConditions.trackCondition},${raceConditions.weather},${results.totalRaceTime.toFixed(2)},${results.maxHP.toFixed(0)},${results.totalHPNeeded.toFixed(0)},${results.shortage.toFixed(0)},${results.staminaEquivPer10Guts.toFixed(0)},${results.speedEquivFromDistance.toFixed(0)},${results.powerEquivOfDuelingAccel.toFixed(1)},${results.distanceGainedBy10speed.toFixed(2)},${results.totalDistanceFrom10Guts.toFixed(2)},${raceConditions.spotStruggleChance},${raceConditions.duelingChance}`;
                     const blob = new Blob([csv], { type: 'text/csv' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
