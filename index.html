@@ -515,7 +515,7 @@
                     <div className={`p-4 rounded-lg ${results.hasEnough ? 'bg-green-50' : 'bg-red-50'}`}>
                         <div className="text-xs text-gray-600">Status</div>
                         <div className={`text-xl font-bold ${results.hasEnough ? 'text-green-700' : 'text-red-700'}`}>
-                        {results.hasEnough ? 'OK' : `Missing HP: ${results.shortage.toFixed(0)}`}
+                        {results.hasEnough ? 'OK - note this is not a full simulator, missing things like pace keeping, rushing, etc. Use a dedicated stamina calculator, see here: https://www.umareference.com/guide/stats/stamina-calculator' : `Missing HP: ${results.shortage.toFixed(0)} note this is not a full simulator, missing things like pace keeping, rushing, etc. Use a dedicated stamina calculator, see here: https://www.umareference.com/guide/stats/stamina-calculator' `}
                         </div>
                     </div>
 
