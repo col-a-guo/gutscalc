@@ -291,7 +291,7 @@
             <p className="text-sm text-gray-600 mb-4">Analyzes Guts value through Stamina savings and Speed bonuses</p>
             
             {/* Parameters Section */}
-            <div className="bg-white p-4 rounded-lg shadow-lg mb-4">
+            <div className="bg-slate p-4 rounded-lg shadow-lg mb-4">
                 <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-semibold text-teal-600">Parameters</h2>
                 <select
@@ -461,7 +461,7 @@
             {results && (
                 <>
                 {/* Guts Equivalencies - Main Numbers */}
-                <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <div className="bg-slate p-6 rounded-lg shadow-lg mb-6">
                     <h2 className="text-2xl font-semibold mb-4 text-teal-600">Guts Equivalencies (per 100 Guts)</h2>
                     
                     <div className="grid grid-cols-3 gap-4">
@@ -498,7 +498,7 @@
                 </div>
 
                 {/* HP Analysis */}
-                <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <div className="bg-slate p-6 rounded-lg shadow-lg mb-6">
                     <h2 className="text-2xl font-semibold mb-4 text-teal-600">Stamina Analysis</h2>
                     
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -558,7 +558,7 @@
                 </div>
 
                 {/* Race Performance */}
-                <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <div className="bg-slate p-6 rounded-lg shadow-lg mb-6">
                     <h2 className="text-2xl font-semibold mb-4 text-teal-600">Race Performance</h2>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -587,7 +587,7 @@
                         <div className="text-sm font-medium mb-1">Spot Struggle</div>
                         <div className="text-2xl font-bold text-rose-700">+{(results.spotStruggleSpeed).toFixed(4)}</div>
                         <div className="text-xs text-gray-600">m/s for {results.spotStruggleDuration.toFixed(1)}s</div>
-                        {raceConditions.runningStyle !== 'Front' && <div className="text-xs text-red-600 mt-1">Not Front Runner!</div>}
+                        {raceConditions.runningStyle !== 'Front' && <div className="text-xs text-red-600 mt-1">You're not set to front, don't include this</div>}
                     </div>
 
                     <div className="p-4 bg-red-50 rounded-lg">
@@ -624,7 +624,7 @@
                     a.download = 'guts_equivalency_analysis.csv';
                     a.click();
                 }}
-                className="px-8 py-3 bg-teal-300 text-white rounded-lg hover:bg-teal-500 transition-colors shadow-lg font-medium text-lg"
+                className="px-8 py-3 bg-teal-300 text-slate rounded-lg hover:bg-teal-500 transition-colors shadow-lg font-medium text-lg"
                 >
                 📊 Export to CSV
                 </button>
